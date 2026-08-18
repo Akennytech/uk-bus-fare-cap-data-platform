@@ -1,0 +1,14 @@
+# Copy to ~/.dbt/profiles.yml (or set DBT_PROFILES_DIR to this folder) and
+# adjust credentials to match your .env file.
+uk_bus_fare_cap:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: postgres
+      password: localdev_pw_123
+      dbname: bus_fare_cap
+      schema: staging
+      threads: 4

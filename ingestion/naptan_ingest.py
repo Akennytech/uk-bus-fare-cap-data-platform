@@ -1,9 +1,8 @@
 """Download the national NaPTAN bus stop dataset and land it in the Bronze layer.
 
-NaPTAN is free, requires no API key, and gives every bus stop in Great Britain
-with its location and local authority — this is the DIM_Location / stop
-reference data every other dataset joins against, so it's the natural first
-ingestion script to get working end to end.
+NaPTAN is free and requires no API key. As of 2026 the dataset is served via
+DfT's REST API (the old naptan.dft.gov.uk/Naptan.ashx export was retired) --
+see https://naptan.api.dft.gov.uk/swagger for the full spec.
 
 Run: python ingestion/naptan_ingest.py
 """
@@ -21,16 +20,12 @@ from common.storage import land_raw_file  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("naptan_ingest")
 
-# CSV export of the full NaPTAN dataset (national). Confirm the current
-# download endpoint at https://naptan.dft.gov.uk/ before scheduling this in
-# production — DfT occasionally moves the export URL between the naptan.dft.gov.uk
-# and beta-naptan.dft.gov.uk hosts.
-NAPTAN_CSV_URL = "https://naptan.dft.gov.uk/Naptan.ashx?format=csv"
+NAPTAN_API_URL = "https://naptan.api.dft.gov.uk/v1/access-nodes"
 
 
-def fetch_naptan(url: str = NAPTAN_CSV_URL, timeout: int = 120) -> bytes:
+def fetch_naptan(url: str = NAPTAN_API_URL, timeout: int = 180) -> bytes:
     log.info("Requesting NaPTAN export from %s", url)
-    resp = requests.get(url, timeout=timeout)
+    resp = requests.get(url, params={"dataFormat": "csv"}, timeout=timeout)
     resp.raise_for_status()
     log.info("Downloaded %d bytes", len(resp.content))
     return resp.content
