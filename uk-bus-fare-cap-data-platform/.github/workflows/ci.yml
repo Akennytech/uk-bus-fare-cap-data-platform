@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: bus_fare_cap
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Lint with ruff
+        run: ruff check ingestion tests
+
+      - name: Run unit tests
+        run: pytest tests -v
+
+      - name: Apply warehouse DDL
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d bus_fare_cap -f sql/ddl_star_schema.sql
+
+      - name: dbt debug + compile
+        working-directory: warehouse
+        env:
+          DBT_PROFILES_DIR: .
+        run: |
+          cp profiles.yml.example profiles.yml
+          sed -i 's/password: change_me_locally/password: postgres/' profiles.yml
+          dbt debug
+          dbt compile
+
+  docker-build-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker-compose config
+        working-directory: docker
+        run: docker compose config

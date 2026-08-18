@@ -1,0 +1,27 @@
+version: 2
+
+sources:
+  - name: silver
+    description: "Silver-layer tables loaded from MinIO Parquet into Postgres for dbt to build on."
+    schema: silver
+    tables:
+      - name: naptan_stops
+        description: "Cleaned, deduplicated NaPTAN bus stop reference data."
+        columns:
+          - name: atco_code
+            description: "Unique national stop identifier."
+            tests:
+              - unique
+              - not_null
+      - name: bods_timetables
+        description: "Cleaned BODS timetable/route data."
+      - name: dft_bus_statistics
+        description: "Cleaned DfT annual/quarterly bus patronage and fares statistics."
+      - name: ons_population
+        description: "Cleaned ONS population estimates by local authority."
+      - name: imd_2019
+        description: "Cleaned English Indices of Deprivation 2019 by LSOA."
+      - name: open_meteo_weather
+        description: "Cleaned daily weather observations by reference point."
+      - name: fuel_prices
+        description: "Cleaned DfT weekly road fuel price series."

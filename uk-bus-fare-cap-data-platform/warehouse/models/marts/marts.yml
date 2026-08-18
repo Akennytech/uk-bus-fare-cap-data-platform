@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: dim_location
+    description: "Conformed location dimension: NaPTAN stop counts joined to ONS population and IMD 2019 deprivation deciles by local authority."
+    columns:
+      - name: la_code
+        description: "ONS local authority code."
+        tests:
+          - not_null
