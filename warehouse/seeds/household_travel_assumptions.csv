@@ -1,0 +1,4 @@
+household_type,weekly_bus_journeys,notes
+Single commuter,10,5 return commute trips per week (Mon-Fri)
+Family (2 fare-paying members),16,Estimated combined weekly trips for two fare-paying household members (commute + leisure)
+Occasional traveller,4,Approx. 2 return trips per week

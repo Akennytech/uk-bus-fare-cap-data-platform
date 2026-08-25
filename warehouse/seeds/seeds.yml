@@ -1,0 +1,12 @@
+version: 2
+seeds:
+  - name: atco_admin_area_lookup
+    config:
+      column_types:
+        atco_admin_area_code: varchar(10)
+        la_name: varchar(100)
+  - name: imd_district_to_region
+    config:
+      column_types:
+        district_name: varchar(100)
+        region_name: varchar(100)

@@ -1,0 +1,5 @@
+period_name,cap_amount,effective_from,effective_to,assumption_notes
+Pre-cap,,2018-01-01,2022-12-31,"Before any national bus fare cap scheme existed"
+GBP2 cap (2023-24),2.00,2023-01-01,2024-12-31,"Original GBP2 cap, launched Jan 2023 as a short scheme and extended multiple times through 2024; exact extension boundaries within this period are approximated to calendar years"
+GBP3 cap,3.00,2025-01-01,2026-12-31,"Cap raised to GBP3 from Jan 2025 following the Oct 2024 budget"
+GBP2 cap (2027),2.00,2027-01-01,2027-12-31,"New GBP2 cap for the whole of 2027, confirmed via gov.uk"

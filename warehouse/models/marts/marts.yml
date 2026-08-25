@@ -1,10 +1,17 @@
 version: 2
-
 models:
   - name: dim_location
-    description: "Conformed location dimension: NaPTAN stop counts joined to ONS population and IMD 2019 deprivation deciles by local authority."
+    description: "Conformed location dimension at ATCO-admin-area grain (6 East Midlands areas): NaPTAN stop counts, ONS mid-2024 population, and IMD 2019 deprivation (population-weighted up from district level)."
     columns:
+      - name: location_key
+        tests:
+          - unique
+          - not_null
       - name: la_code
-        description: "ONS local authority code."
+        description: "ONS/GSS local authority code."
+        tests:
+          - unique
+          - not_null
+      - name: la_name
         tests:
           - not_null

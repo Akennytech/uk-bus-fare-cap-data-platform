@@ -1,8 +1,7 @@
 version: 2
-
 sources:
   - name: silver
-    description: "Silver-layer tables loaded from MinIO Parquet into Postgres for dbt to build on."
+    description: "Silver-layer tables loaded from MinIO CSV into Postgres for dbt to build on."
     schema: silver
     tables:
       - name: naptan_stops
@@ -13,15 +12,28 @@ sources:
             tests:
               - unique
               - not_null
-      - name: bods_timetables
-        description: "Cleaned BODS timetable/route data."
-      - name: dft_bus_statistics
-        description: "Cleaned DfT annual/quarterly bus patronage and fares statistics."
+      - name: bods_services
+        description: "Cleaned BODS TransXChange timetable summary: scheduled trips per operator/line/day-pattern (East Midlands region)."
       - name: ons_population
-        description: "Cleaned ONS population estimates by local authority."
-      - name: imd_2019
-        description: "Cleaned English Indices of Deprivation 2019 by LSOA."
-      - name: open_meteo_weather
-        description: "Cleaned daily weather observations by reference point."
-      - name: fuel_prices
-        description: "Cleaned DfT weekly road fuel price series."
+        description: "ONS mid-2024 population estimates for the project's 6 target local authorities."
+        columns:
+          - name: la_code
+            tests:
+              - unique
+              - not_null
+      - name: imd_la_summary
+        description: "English Indices of Deprivation 2019, aggregated from LSOA to local authority district level (25 districts)."
+        columns:
+          - name: la_code
+            tests:
+              - unique
+              - not_null
+      - name: weather_daily
+        description: "Open-Meteo daily historical weather for Derby, Leicester, Nottingham."
+      - name: fuel_prices_weekly
+        description: "DfT weekly national road fuel price series, 2018-present."
+        columns:
+          - name: week_start_date
+            tests:
+              - unique
+              - not_null
