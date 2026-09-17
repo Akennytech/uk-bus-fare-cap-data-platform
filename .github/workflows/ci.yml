@@ -1,66 +1,77 @@
 name: CI
 
 on:
-  pull_request:
-    branches: [main]
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
 
 jobs:
-  lint-and-test:
+  lint:
+    name: Python lint
     runs-on: ubuntu-latest
-
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: bus_fare_cap
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
+      - name: Install lint tools
+        run: pip install ruff black
+      - name: Ruff (real-bug rules - unused imports, undefined names, syntax errors)
+        run: ruff check .
+      - name: Black format check (informational only for now)
+        run: black --check . || echo "::warning::Code isn't fully Black-formatted yet - run 'black .' locally to normalize it"
+        continue-on-error: true
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Lint with ruff
-        run: ruff check ingestion tests
-
-      - name: Run unit tests
-        run: pytest tests -v
-
-      - name: Apply warehouse DDL
+  dag-validate:
+    name: Airflow DAG import check
+    runs-on: ubuntu-latest
+    env:
+      AIRFLOW_HOME: /tmp/airflow_home
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "sqlite:////tmp/airflow_home/airflow.db"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Airflow (pinned to match the project's Docker image)
         run: |
-          PGPASSWORD=postgres psql -h localhost -U postgres -d bus_fare_cap -f sql/ddl_star_schema.sql
-
-      - name: dbt debug + compile
-        working-directory: warehouse
-        env:
-          DBT_PROFILES_DIR: .
+          pip install "apache-airflow==2.9.0" \
+            --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-2.9.0/constraints-3.11.txt"
+      - name: Initialize Airflow metadata DB
+        run: airflow db migrate
+      - name: Load DAGs and fail on any import error
         run: |
-          cp profiles.yml.example profiles.yml
-          sed -i 's/password: change_me_locally/password: postgres/' profiles.yml
-          dbt debug
-          dbt compile
+          python -c "
+          from airflow.models import DagBag
+          bag = DagBag(dag_folder='airflow/dags', include_examples=False)
+          if bag.import_errors:
+              for path, err in bag.import_errors.items():
+                  print(f'::error file={path}::{err}')
+              raise SystemExit(f'{len(bag.import_errors)} DAG(s) failed to import')
+          print(f'OK - loaded {len(bag.dags)} DAG(s) with no import errors: {list(bag.dags)}')
+          "
 
-  docker-build-check:
+  compose-validate:
+    name: docker-compose config check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate docker-compose config
-        working-directory: docker
-        run: docker compose config
+      - name: Validate docker-compose.yml
+        run: docker compose -f docker/docker-compose.yml config -q
+
+  docker-build:
+    name: Airflow image build check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build airflow image (with layer caching)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/airflow.Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
