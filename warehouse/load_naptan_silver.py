@@ -9,8 +9,8 @@ from pathlib import Path
 import psycopg2
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "ingestion"))
-from common.storage import get_client  # noqa: E402
-from common.config import settings  # noqa: E402
+from common.config import settings
+from common.storage import get_client
 
 DDL = """
 CREATE SCHEMA IF NOT EXISTS silver;
@@ -41,11 +41,10 @@ def main():
             user=settings.postgres_user,
             password=settings.postgres_password,
         )
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(DDL)
-                with open(local_csv, "r", encoding="utf-8") as f:
-                    cur.copy_expert("COPY silver.naptan_stops FROM STDIN WITH CSV HEADER", f)
+        with conn, conn.cursor() as cur:
+            cur.execute(DDL)
+            with open(local_csv, "r", encoding="utf-8") as f:
+                cur.copy_expert("COPY silver.naptan_stops FROM STDIN WITH CSV HEADER", f)
         conn.close()
         print("Loaded silver.naptan_stops into Postgres.")
 

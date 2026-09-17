@@ -12,8 +12,8 @@ from pathlib import Path
 import psycopg2
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "ingestion"))
-from common.config import settings  # noqa: E402
-from common.storage import get_client  # noqa: E402
+from common.config import settings
+from common.storage import get_client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("load_weather_silver")
@@ -47,17 +47,16 @@ def main() -> None:
         password=settings.postgres_password,
     )
     try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(DDL)
-                cur.execute("TRUNCATE silver.weather_daily;")
-                with open(local_path, "r", encoding="utf-8") as f:
-                    cur.copy_expert(
-                        "COPY silver.weather_daily FROM STDIN WITH CSV HEADER",
-                        f,
-                    )
-                cur.execute("SELECT count(*) FROM silver.weather_daily;")
-                (count,) = cur.fetchone()
+        with conn, conn.cursor() as cur:
+            cur.execute(DDL)
+            cur.execute("TRUNCATE silver.weather_daily;")
+            with open(local_path, "r", encoding="utf-8") as f:
+                cur.copy_expert(
+                    "COPY silver.weather_daily FROM STDIN WITH CSV HEADER",
+                    f,
+                )
+            cur.execute("SELECT count(*) FROM silver.weather_daily;")
+            (count,) = cur.fetchone()
         log.info("Loaded %d rows into silver.weather_daily", count)
     finally:
         conn.close()

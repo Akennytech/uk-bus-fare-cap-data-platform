@@ -14,8 +14,8 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "ingestion"))
-from common.config import settings  # noqa: E402
-from common.storage import get_client  # noqa: E402
+from common.config import settings
+from common.storage import get_client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("clean_imd")
@@ -48,7 +48,7 @@ def find_latest_imd_object(client):
     objects = list(client.list_objects(settings.bucket_bronze, prefix=prefix, recursive=True))
     if not objects:
         raise SystemExit(f"No objects found under {prefix}")
-    return sorted(objects, key=lambda o: o.object_name)[-1]
+    return max(objects, key=lambda o: o.object_name)
 
 
 def main() -> None:

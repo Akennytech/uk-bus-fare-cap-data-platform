@@ -13,8 +13,8 @@ from pathlib import Path
 import psycopg2
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "ingestion"))
-from common.config import settings  # noqa: E402
-from common.storage import get_client  # noqa: E402
+from common.config import settings
+from common.storage import get_client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("load_fuel_silver")
@@ -49,22 +49,21 @@ def main() -> None:
         password=settings.postgres_password,
     )
     try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(DDL)
-                cur.execute("TRUNCATE silver.fuel_prices_weekly;")
-                with open(local_path, "r", encoding="utf-8") as f:
-                    cur.copy_expert(
-                        "COPY silver.fuel_prices_weekly FROM STDIN WITH CSV HEADER",
-                        f,
-                    )
-                cur.execute(
-                    "SELECT week_start_date, petrol_pump_price_ppl, diesel_pump_price_ppl "
-                    "FROM silver.fuel_prices_weekly ORDER BY week_start_date DESC LIMIT 3;"
+        with conn, conn.cursor() as cur:
+            cur.execute(DDL)
+            cur.execute("TRUNCATE silver.fuel_prices_weekly;")
+            with open(local_path, "r", encoding="utf-8") as f:
+                cur.copy_expert(
+                    "COPY silver.fuel_prices_weekly FROM STDIN WITH CSV HEADER",
+                    f,
                 )
-                latest = cur.fetchall()
-                cur.execute("SELECT count(*) FROM silver.fuel_prices_weekly;")
-                (count,) = cur.fetchone()
+            cur.execute(
+                "SELECT week_start_date, petrol_pump_price_ppl, diesel_pump_price_ppl "
+                "FROM silver.fuel_prices_weekly ORDER BY week_start_date DESC LIMIT 3;"
+            )
+            latest = cur.fetchall()
+            cur.execute("SELECT count(*) FROM silver.fuel_prices_weekly;")
+            (count,) = cur.fetchone()
         log.info("Most recent weeks:")
         for wk, petrol, diesel in latest:
             log.info("  %s  petrol %sp/L  diesel %sp/L", wk, petrol, diesel)

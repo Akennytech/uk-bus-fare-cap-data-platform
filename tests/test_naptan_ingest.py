@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "ingestion"))
 
-import naptan_ingest  # noqa: E402
+import naptan_ingest
 
 
 class DummyResponse:
@@ -24,7 +24,7 @@ class DummyResponse:
 def test_fetch_naptan_returns_bytes(monkeypatch):
     fake_csv = b"ATCOCode,CommonName,Status\n1800001,Test Stop,active\n"
 
-    def fake_get(url, timeout):
+    def fake_get(url, **kwargs):
         assert "naptan" in url.lower()
         return DummyResponse(fake_csv)
 
@@ -35,7 +35,7 @@ def test_fetch_naptan_returns_bytes(monkeypatch):
 
 
 def test_fetch_naptan_raises_on_http_error(monkeypatch):
-    def fake_get(url, timeout):
+    def fake_get(url, **kwargs):
         return DummyResponse(b"", status_code=500)
 
     monkeypatch.setattr(naptan_ingest.requests, "get", fake_get)

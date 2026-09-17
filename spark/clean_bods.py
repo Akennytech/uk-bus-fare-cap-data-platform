@@ -33,8 +33,8 @@ from xml.etree import ElementTree as ET
 import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "ingestion"))
-from common.config import settings  # noqa: E402
-from common.storage import get_client  # noqa: E402
+from common.config import settings
+from common.storage import get_client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("clean_bods")

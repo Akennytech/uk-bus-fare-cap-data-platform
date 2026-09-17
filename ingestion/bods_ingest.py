@@ -19,8 +19,8 @@ from pathlib import Path
 import requests
 
 sys.path.append(str(Path(__file__).resolve().parent))
-from common.config import settings  # noqa: E402
-from common.storage import land_raw_file  # noqa: E402
+from common.config import settings
+from common.storage import land_raw_file
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("bods_ingest")

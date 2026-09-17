@@ -4,8 +4,8 @@ import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent))
-from common.storage import get_client
 from common.config import settings
+from common.storage import get_client
 
 client = get_client()
 prefix = "bods/"
@@ -13,7 +13,7 @@ objects = list(client.list_objects(settings.bucket_bronze, prefix=prefix, recurs
 if not objects:
     raise SystemExit(f"No objects found under {prefix} in bucket {settings.bucket_bronze}")
 
-latest = sorted(objects, key=lambda o: o.object_name)[-1]
+latest = max(objects, key=lambda o: o.object_name)
 print(f"Reading {latest.object_name}")
 
 resp = client.get_object(settings.bucket_bronze, latest.object_name)

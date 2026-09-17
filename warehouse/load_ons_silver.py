@@ -12,8 +12,8 @@ from pathlib import Path
 import psycopg2
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "ingestion"))
-from common.config import settings  # noqa: E402
-from common.storage import get_client  # noqa: E402
+from common.config import settings
+from common.storage import get_client
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("load_ons_silver")
@@ -45,17 +45,16 @@ def main() -> None:
         password=settings.postgres_password,
     )
     try:
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(DDL)
-                cur.execute("TRUNCATE silver.ons_population;")
-                with open(local_path, "r", encoding="utf-8") as f:
-                    cur.copy_expert(
-                        "COPY silver.ons_population FROM STDIN WITH CSV HEADER",
-                        f,
-                    )
-                cur.execute("SELECT la_name, population_mid2024 FROM silver.ons_population ORDER BY population_mid2024 DESC;")
-                rows = cur.fetchall()
+        with conn, conn.cursor() as cur:
+            cur.execute(DDL)
+            cur.execute("TRUNCATE silver.ons_population;")
+            with open(local_path, "r", encoding="utf-8") as f:
+                cur.copy_expert(
+                    "COPY silver.ons_population FROM STDIN WITH CSV HEADER",
+                    f,
+                )
+            cur.execute("SELECT la_name, population_mid2024 FROM silver.ons_population ORDER BY population_mid2024 DESC;")
+            rows = cur.fetchall()
         for name, pop in rows:
             log.info("  %-16s %s", name, f"{pop:,}")
         log.info("Loaded %d rows into silver.ons_population", len(rows))

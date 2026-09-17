@@ -7,16 +7,15 @@ Run: python ingestion/weather_ingest.py
 """
 from __future__ import annotations
 
-import json
 import logging
 import sys
-from datetime import date, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
 
 sys.path.append(str(Path(__file__).resolve().parent))
-from common.storage import land_raw_file  # noqa: E402
+from common.storage import land_raw_file
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("weather_ingest")
@@ -47,7 +46,7 @@ def fetch_weather(lat: float, lon: float, start_date: str, end_date: str, timeou
 
 
 def main() -> None:
-    end_date = date.today() - timedelta(days=1)  # archive API needs a fully-completed day
+    end_date = datetime.now(tz=timezone.utc).date() - timedelta(days=1)  # archive API needs a fully-completed day
     start_date = end_date - timedelta(days=int(365 * 2.5))
 
     log.info("Fetching weather from %s to %s for %d locations", start_date, end_date, len(LOCATIONS))

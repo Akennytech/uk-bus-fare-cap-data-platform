@@ -6,7 +6,7 @@ or Azure Blob's S3-compatible endpoint later.
 from __future__ import annotations
 
 import io
-from datetime import date
+from datetime import date, datetime, timezone
 
 from minio import Minio
 from minio.error import S3Error
@@ -35,7 +35,7 @@ def land_raw_file(source_name: str, filename: str, content: bytes, run_date: dat
     This partitioning makes it trivial for PySpark to read a whole day's
     landing zone, and keeps every ingestion run immutable and auditable.
     """
-    run_date = run_date or date.today()
+    run_date = run_date or datetime.now(tz=timezone.utc).date()
     client = get_client()
     ensure_bucket(client, settings.bucket_bronze)
 

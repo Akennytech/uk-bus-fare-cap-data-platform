@@ -13,10 +13,10 @@ import tempfile
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parents[1] / "ingestion"))
-from common.storage import get_client  # noqa: E402
-from common.config import settings  # noqa: E402
-
-from pyspark.sql import SparkSession, functions as F
+from common.config import settings
+from common.storage import get_client
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
 
 
 def find_latest_bronze_object(client, bucket, prefix="naptan/"):

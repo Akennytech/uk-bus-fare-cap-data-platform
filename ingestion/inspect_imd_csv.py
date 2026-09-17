@@ -9,13 +9,13 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.append(str(Path(__file__).resolve().parent))
-from common.config import settings  # noqa: E402
-from common.storage import get_client  # noqa: E402
+from common.config import settings
+from common.storage import get_client
 
 client = get_client()
 prefix = "imd2019/"
 objects = list(client.list_objects(settings.bucket_bronze, prefix=prefix, recursive=True))
-latest = sorted(objects, key=lambda o: o.object_name)[-1]
+latest = max(objects, key=lambda o: o.object_name)
 print(f"Reading {latest.object_name}")
 
 local_path = str(Path(tempfile.gettempdir()) / "imd2019_inspect.csv")
@@ -30,7 +30,7 @@ print("\nFirst 3 rows (first 6 columns only):")
 print(df.iloc[:3, :6])
 
 full = pd.read_csv(local_path, usecols=[c for c in df.columns if "Local Authority District" in c])
-la_col = [c for c in full.columns if "Local Authority District name" in c][0]
+la_col = next(c for c in full.columns if "Local Authority District name" in c)
 target_districts = {
     "Derby", "Leicester", "Nottingham",
     "Amber Valley", "Bolsover", "Chesterfield", "Derbyshire Dales", "Erewash",
