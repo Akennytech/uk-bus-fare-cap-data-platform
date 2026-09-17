@@ -1,6 +1,8 @@
 # Ingestion
 requests>=2.31
 python-dotenv>=1.0
+openpyxl>=3.1
+openpyxl>=3.1
 
 # Processing
 pyspark>=3.5

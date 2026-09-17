@@ -29,8 +29,8 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-change_me_locally}
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # Web console
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - minio-data:/data
     healthcheck:
@@ -39,7 +39,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Creates the bronze/silver buckets automatically on first startup.
   minio-init:
     image: minio/mc:latest
     depends_on:
@@ -54,29 +53,39 @@ services:
       "
 
   # ---------------------------------------------------------------------
-  # Airflow (Week 4 of the roadmap). Uncomment once your DAGs are ready.
-  # For a full multi-service Airflow stack (scheduler, webserver, triggerer),
-  # start from the official compose file and point it at ../airflow/dags:
-  # https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
-  # A minimal single-container option for local development:
-  #
-  # airflow:
-  #   image: apache/airflow:2.9.0
-  #   container_name: bfc-airflow
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - postgres
-  #   environment:
-  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-change_me_locally}@postgres/airflow
-  #     AIRFLOW__CORE__LOAD_EXAMPLES: "false"
-  #   volumes:
-  #     - ../airflow/dags:/opt/airflow/dags
-  #   ports:
-  #     - "8080:8080"
-  #   command: standalone
+  # Airflow (Week 4 of the roadmap) — single "standalone" container:
+  # webserver + scheduler + a freshly-created admin user, all in one process.
+  # Fine for local/portfolio use; not how you'd run this in production.
   # ---------------------------------------------------------------------
+  airflow:
+    build:
+      context: ..
+      dockerfile: docker/airflow.Dockerfile
+    container_name: bfc-airflow
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AIRFLOW_UID: ${AIRFLOW_UID:-50000}
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/project/airflow/dags
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-change_me_locally}@postgres/airflow
+      # Same variable names your scripts already read from .env — but inside
+      # this container, Postgres/MinIO are reachable by service name, not
+      # "localhost". python-dotenv's load_dotenv() won't override values
+      # already set in the real environment, so these two win over .env.
+      POSTGRES_HOST: postgres
+      MINIO_ENDPOINT: minio:9000
+    volumes:
+      - ..:/opt/airflow/project
+      - airflow-logs:/opt/airflow/logs
+    ports:
+      - "8080:8080"
+    command: standalone
 
 volumes:
   pgdata:
   minio-data:
+  airflow-logs:

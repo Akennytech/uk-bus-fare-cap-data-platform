@@ -1,14 +1,19 @@
 # Copy to ~/.dbt/profiles.yml (or set DBT_PROFILES_DIR to this folder) and
 # adjust credentials to match your .env file.
+#
+# Host/port/user/password/dbname come from environment variables, falling
+# back to your local defaults — so this file works unchanged whether dbt
+# runs natively (falls back to localhost) or inside the Airflow container
+# (which sets POSTGRES_HOST=postgres).
 uk_bus_fare_cap:
   target: dev
   outputs:
     dev:
       type: postgres
-      host: localhost
-      port: 5432
-      user: postgres
-      password: localdev_pw_123
-      dbname: bus_fare_cap
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
+      port: "{{ env_var('POSTGRES_PORT', '5432') | as_number }}"
+      user: "{{ env_var('POSTGRES_USER', 'postgres') }}"
+      password: "{{ env_var('POSTGRES_PASSWORD', 'localdev_pw_123') }}"
+      dbname: "{{ env_var('POSTGRES_DB', 'bus_fare_cap') }}"
       schema: staging
       threads: 4
